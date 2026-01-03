@@ -1,15 +1,29 @@
-"use client";
-
+import { useState, useEffect } from "react";
 import { HelpCircle } from "lucide-react";
 
 export default function ConfidenceWidget() {
-    // Mock Data
-    const totalScore = 92;
-    const metrics = [
-        { label: "Token Logprobs", value: 88, weight: "30%", color: "bg-purple-500", tooltip: "Calculated via LLM Logprobs" },
-        { label: "State Verification", value: 100, weight: "50%", color: "bg-emerald-500", tooltip: "Verified via CLI exit codes" },
-        { label: "Pattern Consistency", value: 85, weight: "20%", color: "bg-blue-500", tooltip: "Historical pattern match rate" },
-    ];
+    const [data, setData] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchConfidence = async () => {
+            try {
+                const res = await fetch("http://localhost:8000/api/stats/confidence");
+                if (res.ok) {
+                    setData(await res.json());
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchConfidence();
+        const interval = setInterval(fetchConfidence, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    if (!data) return <div className="text-gray-500 text-xs">Loading Confidence...</div>;
+
+    const totalScore = data.total_score;
+    const metrics = data.metrics;
 
     // Radial Gauge Math
     const radius = 80;

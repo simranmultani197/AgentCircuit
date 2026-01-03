@@ -14,6 +14,7 @@ type StatsData = {
 
 export default function Stats() {
     const [stats, setStats] = useState<StatsData | null>(null);
+    const [graphData, setGraphData] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -21,6 +22,10 @@ export default function Stats() {
                 const res = await fetch("http://localhost:8000/api/stats");
                 if (res.ok) {
                     setStats(await res.json());
+                }
+                const graphRes = await fetch("http://localhost:8000/api/stats/reliability_history");
+                if (graphRes.ok) {
+                    setGraphData(await graphRes.json());
                 }
             } catch (e) {
                 console.error(e);
@@ -49,12 +54,9 @@ export default function Stats() {
                 {/* Dynamic Reliability Graph */}
                 <div className="mt-4 h-12 w-full">
                     <ReliabilityGraph
-                        data={[
-                            { timestamp: "02:00", score: 98 }, { timestamp: "04:00", score: 99 },
-                            { timestamp: "06:00", score: 97 }, { timestamp: "08:00", score: 85 },
-                            { timestamp: "10:00", score: 92 }, { timestamp: "12:00", score: 96 },
-                            { timestamp: "14:00", score: 98 }, { timestamp: "16:00", score: 99 },
-                            { timestamp: "18:00", score: 100 }, { timestamp: "20:00", score: 99 }
+                        data={graphData.length > 0 ? graphData : [
+                            { timestamp: "Moments Ago", score: 100 },
+                            { timestamp: "Now", score: 100 }
                         ]}
                         width={280}
                         height={40}

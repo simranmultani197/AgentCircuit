@@ -1,13 +1,39 @@
 "use client";
 
 import { AlertOctagon, ShieldAlert, ZapOff } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function FailureRootCausesChart() {
-    // Mock distribution
-    const data = [
-        { label: "Validation Errors", value: 65, color: "bg-rose-500", icon: ShieldAlert },
-        { label: "Loop Detection", value: 25, color: "bg-amber-500", icon: AlertOctagon },
-        { label: "Runtime Exceptions", value: 10, color: "bg-red-600", icon: ZapOff },
+    const [chartData, setChartData] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await fetch("http://localhost:8000/api/stats/root_causes");
+                if (res.ok) {
+                    const data = await res.json();
+                    // Map icons back to the response
+                    const mappedData = data.map((item: any) => ({
+                        ...item,
+                        icon: item.label === "Validation Errors" ? ShieldAlert :
+                            item.label === "Loop Detection" ? AlertOctagon : ZapOff
+                    }));
+                    setChartData(mappedData);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchData();
+        const interval = setInterval(fetchData, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Fallback/Loading state (keep skeleton or default)
+    const displayData = chartData.length > 0 ? chartData : [
+        { label: "Validation Errors", value: 0, color: "bg-rose-500", icon: ShieldAlert },
+        { label: "Loop Detection", value: 0, color: "bg-amber-500", icon: AlertOctagon },
+        { label: "Runtime Exceptions", value: 0, color: "bg-red-600", icon: ZapOff },
     ];
 
     return (
@@ -15,7 +41,7 @@ export default function FailureRootCausesChart() {
             <h3 className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">Failure Root Causes</h3>
 
             <div className="space-y-4">
-                {data.map((item) => {
+                {displayData.map((item) => {
                     const Icon = item.icon;
                     return (
                         <div key={item.label} className="group">

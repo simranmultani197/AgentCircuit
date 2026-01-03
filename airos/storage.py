@@ -48,6 +48,8 @@ class Storage:
             cursor.execute("ALTER TABLE traces ADD COLUMN estimated_cost REAL DEFAULT 0.0")
         if "diagnosis" not in columns:
             cursor.execute("ALTER TABLE traces ADD COLUMN diagnosis TEXT")
+        if "duration_ms" not in columns:
+            cursor.execute("ALTER TABLE traces ADD COLUMN duration_ms REAL DEFAULT 0.0")
 
         # Global Settings
         cursor.execute("""
@@ -75,7 +77,8 @@ class Storage:
                   saved_cost: float = 0.0,
                   token_usage: int = 0,
                   estimated_cost: float = 0.0,
-                  diagnosis: Optional[str] = None):
+                  diagnosis: Optional[str] = None,
+                  duration_ms: float = 0.0):
         """Log a node execution trace."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -84,9 +87,9 @@ class Storage:
             output_json = json.dumps(output_state, default=str)
             
             cursor.execute("""
-                INSERT INTO traces (run_id, node_id, input_state, output_state, status, cost_tokens, recovery_attempts, saved_cost, token_usage, estimated_cost, diagnosis)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (run_id, node_id, input_json, output_json, status, cost_tokens, recovery_attempts, saved_cost, token_usage, estimated_cost, diagnosis))
+                INSERT INTO traces (run_id, node_id, input_state, output_state, status, cost_tokens, recovery_attempts, saved_cost, token_usage, estimated_cost, diagnosis, duration_ms)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (run_id, node_id, input_json, output_json, status, cost_tokens, recovery_attempts, saved_cost, token_usage, estimated_cost, diagnosis, duration_ms))
             conn.commit()
         except Exception as e:
             print(f"Error logging trace: {e}")

@@ -1,6 +1,7 @@
 import functools
 import traceback
 import inspect
+import time
 from typing import Any, Optional, Callable, Dict
 from pydantic import BaseModel
 
@@ -121,6 +122,7 @@ def reliable_node(
             current_error = None
             saved_cost = 0.0
             diagnosis = None
+            start_time = time.time()
             
             # Initial Execution
             try:
@@ -171,7 +173,8 @@ def reliable_node(
                         input_state=state,
                         raw_output=raw_output,
                         node_id=actual_node_name,
-                        recovery_attempts=recovery_count
+                        recovery_attempts=recovery_count,
+                        schema=sentinel_schema
                     )
                     
                     # Re-validate
@@ -204,6 +207,7 @@ def reliable_node(
             
             if current_error:
                 # Log failure
+                duration_ms = (time.time() - start_time) * 1000
                 storage.log_trace(
                     run_id=run_id,
                     node_id=actual_node_name,
@@ -212,7 +216,8 @@ def reliable_node(
                     status="failed",
                     recovery_attempts=recovery_count,
                     saved_cost=0.0,
-                    diagnosis=diagnosis
+                    diagnosis=diagnosis,
+                    duration_ms=duration_ms
                 )
                 print(f"CRITICAL FAILURE in {actual_node_name}: {current_error}")
                 raise current_error
@@ -237,6 +242,8 @@ def reliable_node(
             elif status == "failed" and current_error:
                 final_diagnosis = str(current_error)
 
+            duration_ms = (time.time() - start_time) * 1000
+
             storage.log_trace(
                 run_id=run_id,
                 node_id=actual_node_name,
@@ -247,7 +254,8 @@ def reliable_node(
                 saved_cost=saved_cost,
                 token_usage=token_usage,
                 estimated_cost=estimated_cost,
-                diagnosis=final_diagnosis
+                diagnosis=final_diagnosis,
+                duration_ms=duration_ms
             )
 
             return result

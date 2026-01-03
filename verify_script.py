@@ -1,6 +1,10 @@
 from airos import reliable_node, LoopError, SentinelError
 from pydantic import BaseModel
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Sentinel Schema
 class OutputModel(BaseModel):
@@ -10,6 +14,8 @@ class OutputModel(BaseModel):
 # Mock LLM for Repair
 def mock_repair_llm(prompt: str) -> str:
     print(f"\n[MockLLM] Received Prompt:\n{prompt[:100]}...\n")
+    # Simulate network latency for realistic metrics
+    time.sleep(1.2)
     # Simulate fixing the error by returning valid JSON
     return json.dumps({"message": "Repaired by LLM", "value": 100})
 
@@ -30,6 +36,12 @@ def error_node_llm(state):
 def bad_schema_node(state):
     print("Executing bad schema node...")
     return {"message": "Fail", "value": "not an int"}
+
+# 4. Test Default LLM (Groq) - Requires GROQ_API_KEY
+@reliable_node(sentinel_schema=OutputModel, node_name="test_node_groq_default")
+def error_node_default(state):
+    print("Executing error node (Default LLM)...")
+    raise ValueError("Simulation: This error should be fixed by Groq!")
 
 import time
 
@@ -55,6 +67,18 @@ def run_verification():
     print(f"Run ID: {run_id_3}")
     res = bad_schema_node({"step": "bad_schema"}, config={"run_id": run_id_3})
     print(f"Result after medic: {res}")
+
+    print("\n--- 4. Medic Default LLM (Groq) ---")
+    if os.environ.get("GROQ_API_KEY"):
+        run_id_4 = f"verify_groq_{suffix}"
+        print(f"Run ID: {run_id_4}")
+        try:
+            res = error_node_default({"step": "groq_test"}, config={"run_id": run_id_4})
+            print(f"Result after medic (Groq): {res}")
+        except Exception as e:
+            print(f"Groq Test Failed: {e}")
+    else:
+        print("Skipping Groq test (No GROQ_API_KEY found in env)")
 
 if __name__ == "__main__":
     run_verification()
