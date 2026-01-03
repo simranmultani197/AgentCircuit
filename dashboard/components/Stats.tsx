@@ -28,7 +28,7 @@ export default function Stats() {
                     setGraphData(await graphRes.json());
                 }
             } catch (e) {
-                console.error(e);
+                console.warn("Stats poll failed:", e);
             }
         };
 

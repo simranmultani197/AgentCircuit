@@ -29,7 +29,8 @@ export default function SavingsCard({ settings }: SavingsCardProps) {
                     setStats(await res.json());
                 }
             } catch (e) {
-                console.error(e);
+                // Poll silently on error
+                console.warn("Savings poll failed:", e);
             }
         };
 
@@ -87,7 +88,7 @@ export default function SavingsCard({ settings }: SavingsCardProps) {
                 }
             `}</style>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 mt-6">
 
                 {/* Total Savings */}
                 <div className={`
@@ -108,24 +109,6 @@ export default function SavingsCard({ settings }: SavingsCardProps) {
                     </div>
                     <p className="text-xs text-gray-400 mt-4">
                         compute + labor + downtime avoided
-                    </p>
-                </div>
-
-                {/* Lives Saved (Failures Prevented) */}
-                <div className="bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <HeartPulse size={80} />
-                    </div>
-                    <div>
-                        <h3 className="text-pink-400 font-medium text-sm flex items-center gap-2">
-                            <HeartPulse size={16} /> LIVES SAVED
-                        </h3>
-                        <p className="text-4xl font-black text-white mt-2">
-                            {stats.failures_prevented}
-                        </p>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-4">
-                        Critical failures auto-repaired by Medic.
                     </p>
                 </div>
 
