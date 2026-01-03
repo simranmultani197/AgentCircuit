@@ -1,6 +1,9 @@
 # AirOS (AI Reliability OS)
 
+
 **A local-first, agentic reliability framework for LangGraph developers.**
+
+![AirOS Dashboard](assets/dashboard_screenshot.png)
 
 AirOS acts as an "Active Reliability" layer that intercepts node execution to prevent loops, fix errors, and validate outputs. It is designed to be a zero-config, "drop-in" medic for your AI agents.
 
