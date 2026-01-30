@@ -9,6 +9,7 @@ description = "One decorator to make any AI agent reliable. Loop detection, auto
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
+authors = [{name = "Simranjeet Singh", email = "simranmultani197@gmail.com"}]
 keywords = ["ai", "agents", "reliability", "llm", "langchain", "crewai", "autogen", "langgraph"]
 classifiers = [
     "Development Status :: 4 - Beta",
