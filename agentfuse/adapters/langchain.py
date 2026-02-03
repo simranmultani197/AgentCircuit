@@ -1,5 +1,5 @@
 """
-LangChain adapter for AirOS.
+LangChain adapter for AgentFuse.
 
 Provides integration with LangChain's LCEL chains, agents, and tools.
 """
@@ -254,7 +254,7 @@ class LangChainMiddleware:
     Middleware for automatically wrapping LangChain components.
 
     Usage:
-        from airos.adapters import LangChainAdapter
+        from agentfuse.adapters import LangChainAdapter
 
         adapter = LangChainAdapter()
         middleware = adapter.create_middleware()

@@ -1,5 +1,5 @@
 """
-AirOS Root Cause Analysis (RCA) Module
+AgentFuse Root Cause Analysis (RCA) Module
 
 Provides automated analysis of failures to identify patterns,
 root causes, and actionable recommendations.

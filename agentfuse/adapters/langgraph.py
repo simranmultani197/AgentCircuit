@@ -1,7 +1,7 @@
 """
-LangGraph adapter for AirOS.
+LangGraph adapter for AgentFuse.
 
-This is the native/primary integration as AirOS was originally designed for LangGraph.
+This is the native/primary integration as AgentFuse was originally designed for LangGraph.
 """
 import functools
 from typing import Any, Callable, Dict, Optional, Type
@@ -20,7 +20,7 @@ class LangGraphAdapter(FrameworkAdapter):
     """
     Adapter for LangGraph framework.
 
-    LangGraph is the native framework for AirOS, so this adapter
+    LangGraph is the native framework for AgentFuse, so this adapter
     mainly wraps the existing reliable_node decorator.
     """
 
@@ -71,7 +71,7 @@ class LangGraphMiddleware:
 
     Usage:
         from langgraph.graph import StateGraph
-        from airos.adapters import LangGraphAdapter
+        from agentfuse.adapters import LangGraphAdapter
 
         adapter = LangGraphAdapter()
         middleware = adapter.create_middleware()
@@ -88,7 +88,7 @@ class LangGraphMiddleware:
         """
         Attach middleware to a LangGraph StateGraph.
 
-        This wraps all nodes in the graph with AirOS reliability.
+        This wraps all nodes in the graph with AgentFuse reliability.
         Supports both legacy LangGraph (nodes are plain callables) and
         modern LangGraph (nodes are StateNodeSpec with .runnable).
 

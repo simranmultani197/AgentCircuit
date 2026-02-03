@@ -1,1 +1,1 @@
-# Integration tests for AirOS
+# Integration tests for AgentFuse

@@ -1,16 +1,18 @@
-# AirOS
+# AgentFuse
 
-[![PyPI version](https://img.shields.io/pypi/v/airos-sdk.svg)](https://pypi.org/project/airos-sdk/)
-[![Python](https://img.shields.io/pypi/pyversions/airos-sdk.svg)](https://pypi.org/project/airos-sdk/)
+[![PyPI version](https://img.shields.io/pypi/v/agentcircuit.svg)](https://pypi.org/project/agentcircuit/)
+[![Python](https://img.shields.io/pypi/pyversions/agentcircuit.svg)](https://pypi.org/project/agentcircuit/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**One decorator to make any AI agent reliable. Loop detection, auto-repair, output validation, budget control.**
+**One decorator to make any AI agent reliable.**
+
+AgentFuse is a circuit breaker and runtime safety layer for AI agents — loop detection, auto-repair, output validation, and budget control in a single decorator.
 
 ```
-pip install airos-sdk
+pip install agentcircuit
 ```
 
-AirOS wraps your AI agent functions with invisible safety nets:
+AgentFuse wraps your AI agent functions with invisible safety nets:
 
 - **Fuse** - Detects infinite loops and kills them before they drain your wallet
 - **Medic** - Catches exceptions and auto-repairs outputs using an LLM
@@ -35,7 +37,7 @@ def extract_data(state):
 **After** - one line change, your agent self-heals:
 
 ```python
-from airos import reliable
+from agentfuse import reliable
 from pydantic import BaseModel
 
 class Output(BaseModel):
@@ -64,7 +66,7 @@ What happens behind the scenes:
 ### Minimal (no LLM, just validation + loop detection)
 
 ```python
-from airos import reliable
+from agentfuse import reliable
 from pydantic import BaseModel
 
 class SearchResult(BaseModel):
@@ -79,7 +81,7 @@ def search_node(state):
 ### With Auto-Repair (add an LLM for self-healing)
 
 ```
-pip install airos-sdk[groq]  # or airos-sdk[openai] or airos-sdk[anthropic]
+pip install agentcircuit[groq]  # or agentcircuit[openai] or agentcircuit[anthropic]
 ```
 
 ```python
@@ -105,14 +107,14 @@ Now if `search_node` throws an exception or returns invalid data, Medic will use
 
 ## Cost Saving
 
-AirOS provides three layers of cost protection to prevent runaway agent loops from draining your wallet.
+AgentFuse provides three layers of cost protection to prevent runaway agent loops from draining your wallet.
 
 ### Per-Node Dollar Limit
 
 Stop a single node from spending too much:
 
 ```python
-from airos import reliable
+from agentfuse import reliable
 
 @reliable(max_cost_usd=2.0, model="gpt-4o")
 def expensive_node(state):
@@ -136,7 +138,7 @@ def slow_node(state):
 Set one budget for your entire agent graph — all nodes share it:
 
 ```python
-from airos import reliable, GlobalBudget
+from agentfuse import reliable, GlobalBudget
 
 budget = GlobalBudget(max_cost_usd=10.0, max_seconds=120)
 
@@ -166,7 +168,7 @@ If the combined cost of `node_a` + `node_b` exceeds $10.00 or 120 seconds, the n
 ### Catching Budget Errors
 
 ```python
-from airos import reliable, GlobalBudget, BudgetExceededError, TimeoutExceededError
+from agentfuse import reliable, GlobalBudget, BudgetExceededError, TimeoutExceededError
 
 budget = GlobalBudget(max_cost_usd=5.0, max_seconds=60)
 
@@ -187,11 +189,11 @@ except TimeoutExceededError as e:
 
 ## Pricing & Cost Tracking
 
-AirOS automatically tracks the cost of every node execution. It uses a priority chain to get the most accurate cost:
+AgentFuse automatically tracks the cost of every node execution. It uses a priority chain to get the most accurate cost:
 
 | Priority | Source | Accuracy |
 |----------|--------|----------|
-| 1 | Actual API token usage (from AirOS providers) | Exact |
+| 1 | Actual API token usage (from AgentFuse providers) | Exact |
 | 2 | User-provided `cost_per_token` | Explicit |
 | 3 | Built-in model pricing table lookup | Good estimate |
 | 4 | Default $5/1M tokens flat rate | Rough fallback |
@@ -232,7 +234,7 @@ Model names are matched flexibly — `"gpt-4o"`, `"gpt-4o-2024-08-06"`, and `"GP
 ### Using CostCalculator Directly
 
 ```python
-from airos import CostCalculator, get_model_pricing
+from agentfuse import CostCalculator, get_model_pricing
 
 # Check a model's pricing
 pricing = get_model_pricing("gpt-4o")
@@ -251,7 +253,7 @@ print(f"Cost: ${cost:.6f}")
 
 ```python
 from langgraph.graph import StateGraph
-from airos import reliable, GlobalBudget
+from agentfuse import reliable, GlobalBudget
 from pydantic import BaseModel
 
 class AgentState(BaseModel):
@@ -272,7 +274,7 @@ graph.add_node("process", process_node)
 ## With LangChain / CrewAI / AutoGen
 
 ```python
-from airos import get_adapter
+from agentfuse import get_adapter
 
 # LangChain
 adapter = get_adapter("langchain", fuse_limit=5)
@@ -318,13 +320,13 @@ Your Function
 
 ## Storage
 
-By default, AirOS stores traces **in memory** (lost when process exits). For persistence:
+By default, AgentFuse stores traces **in memory** (lost when process exits). For persistence:
 
 ```python
-from airos import reliable, set_default_storage
-from airos.storage import Storage  # SQLite backend
+from agentfuse import reliable, set_default_storage
+from agentfuse.storage import Storage  # SQLite backend
 
-set_default_storage(Storage())  # Now traces persist to .air_os/traces.db
+set_default_storage(Storage())  # Now traces persist to .agentfuse/traces.db
 
 @reliable()
 def my_node(state):
@@ -334,7 +336,7 @@ def my_node(state):
 Or pass storage per-decorator:
 
 ```python
-from airos.storage import Storage
+from agentfuse.storage import Storage
 
 db = Storage(db_path="my_traces.db")
 
@@ -346,14 +348,14 @@ def my_node(state):
 ## Installation Options
 
 ```bash
-pip install airos-sdk                 # Core only (pydantic). Validation + loop detection.
-pip install airos-sdk[groq]           # + Groq for auto-repair
-pip install airos-sdk[openai]         # + OpenAI for auto-repair
-pip install airos-sdk[anthropic]      # + Anthropic for auto-repair
-pip install airos-sdk[langchain]      # + LangChain adapter
-pip install airos-sdk[crewai]         # + CrewAI adapter
-pip install airos-sdk[llm]            # All LLM providers
-pip install airos-sdk[all]            # Everything
+pip install agentcircuit                 # Core only (pydantic). Validation + loop detection.
+pip install agentcircuit[groq]           # + Groq for auto-repair
+pip install agentcircuit[openai]         # + OpenAI for auto-repair
+pip install agentcircuit[anthropic]      # + Anthropic for auto-repair
+pip install agentcircuit[langchain]      # + LangChain adapter
+pip install agentcircuit[crewai]         # + CrewAI adapter
+pip install agentcircuit[llm]            # All LLM providers
+pip install agentcircuit[all]            # Everything
 ```
 
 ## API Reference
@@ -377,7 +379,7 @@ pip install airos-sdk[all]            # Everything
 ### Core Components
 
 ```python
-from airos import Fuse, Medic, Sentinel  # Use individually if needed
+from agentfuse import Fuse, Medic, Sentinel  # Use individually if needed
 ```
 
 - **`Fuse(limit=3)`** - Loop detection via state hashing
@@ -387,7 +389,7 @@ from airos import Fuse, Medic, Sentinel  # Use individually if needed
 ### Budget Components
 
 ```python
-from airos import BudgetFuse, TimeoutFuse, GlobalBudget
+from agentfuse import BudgetFuse, TimeoutFuse, GlobalBudget
 ```
 
 - **`BudgetFuse(max_cost_usd=1.0)`** - Dollar-based circuit breaker
@@ -397,7 +399,7 @@ from airos import BudgetFuse, TimeoutFuse, GlobalBudget
 ### Pricing Components
 
 ```python
-from airos import CostCalculator, get_model_pricing, MODEL_PRICING
+from agentfuse import CostCalculator, get_model_pricing, MODEL_PRICING
 ```
 
 - **`CostCalculator(model="gpt-4o")`** - Calculate costs using model pricing
@@ -408,7 +410,7 @@ from airos import CostCalculator, get_model_pricing, MODEL_PRICING
 ### Error Types
 
 ```python
-from airos import BudgetExceededError, TimeoutExceededError, LoopError
+from agentfuse import BudgetExceededError, TimeoutExceededError, LoopError
 ```
 
 | Error | Raised When | Attributes |
@@ -420,7 +422,7 @@ from airos import BudgetExceededError, TimeoutExceededError, LoopError
 ## Running Tests
 
 ```bash
-pip install airos-sdk[dev]
+pip install agentcircuit[dev]
 pytest
 ```
 

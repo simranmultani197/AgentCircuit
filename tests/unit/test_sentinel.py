@@ -5,7 +5,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 from typing import Dict, Any, Optional, List
 
-from airos.sentinel import Sentinel, SentinelError
+from agentfuse.sentinel import Sentinel, SentinelError
 
 
 # ============================================================================

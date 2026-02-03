@@ -8,7 +8,7 @@ import tempfile
 import shutil
 from datetime import datetime
 
-from airos.storage import Storage
+from agentfuse.storage import Storage
 
 
 class TestStorageBasics:

@@ -1,5 +1,5 @@
 """
-Model pricing table and cost calculation for AirOS.
+Model pricing table and cost calculation for AgentFuse.
 
 Provides accurate cost estimation based on:
 1. Actual API token usage (when available from providers)

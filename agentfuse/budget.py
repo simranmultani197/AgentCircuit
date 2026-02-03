@@ -1,5 +1,5 @@
 """
-Cost-saving circuit breakers for AirOS.
+Cost-saving circuit breakers for AgentFuse.
 
 Provides:
 - BudgetFuse: Trips when cumulative dollar spend exceeds a threshold
@@ -94,7 +94,7 @@ class GlobalBudget:
     agent graph execution.
 
     Usage:
-        from airos import reliable, GlobalBudget
+        from agentfuse import reliable, GlobalBudget
 
         budget = GlobalBudget(max_cost_usd=5.0, max_seconds=120)
 

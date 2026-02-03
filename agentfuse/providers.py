@@ -1,5 +1,5 @@
 """
-Multi-model LLM provider support for AirOS.
+Multi-model LLM provider support for AgentFuse.
 
 This module provides a unified interface for different LLM providers
 (OpenAI, Anthropic, Groq, local models) with automatic fallback.

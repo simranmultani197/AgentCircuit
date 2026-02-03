@@ -1,5 +1,5 @@
 """
-Framework adapters for AirOS.
+Framework adapters for AgentFuse.
 
 Provides integration with multiple AI agent frameworks:
 - LangGraph (native)

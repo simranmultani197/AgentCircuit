@@ -1,5 +1,5 @@
 """
-Pytest configuration and shared fixtures for AirOS tests.
+Pytest configuration and shared fixtures for AgentFuse tests.
 """
 import pytest
 import tempfile
@@ -42,7 +42,7 @@ class StrictOutputSchema(BaseModel):
 def temp_db_path() -> Generator[str, None, None]:
     """Create a temporary database path for testing."""
     temp_dir = tempfile.mkdtemp()
-    db_path = os.path.join(temp_dir, ".air_os", "traces.db")
+    db_path = os.path.join(temp_dir, ".agentfuse", "traces.db")
     yield db_path
     # Cleanup
     shutil.rmtree(temp_dir, ignore_errors=True)

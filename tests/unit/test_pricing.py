@@ -3,7 +3,7 @@ Unit tests for the Pricing module - Cost calculation and model pricing.
 """
 import pytest
 
-from airos.pricing import (
+from agentfuse.pricing import (
     ModelPricing,
     CostCalculator,
     MODEL_PRICING,

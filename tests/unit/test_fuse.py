@@ -2,7 +2,7 @@
 Unit tests for the Fuse module - Loop Detection.
 """
 import pytest
-from airos.fuse import Fuse, LoopError
+from agentfuse.fuse import Fuse, LoopError
 
 
 class TestFuseBasics:

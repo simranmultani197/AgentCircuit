@@ -70,7 +70,7 @@ class FrameworkAdapter(ABC):
         **kwargs
     ) -> Callable:
         """
-        Wrap a single node/function with AirOS reliability.
+        Wrap a single node/function with AgentFuse reliability.
 
         Args:
             func: The function to wrap

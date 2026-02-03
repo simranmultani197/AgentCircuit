@@ -1,8 +1,8 @@
 """
-AirOS - One decorator to make any AI agent reliable.
+AgentFuse - One decorator to make any AI agent reliable.
 
 Usage:
-    from airos import reliable
+    from agentfuse import reliable
 
     @reliable(fuse_limit=3)
     def my_agent_node(state):
@@ -10,7 +10,7 @@ Usage:
 
 Or with schema validation:
 
-    from airos import reliable
+    from agentfuse import reliable
     from pydantic import BaseModel
 
     class Output(BaseModel):
@@ -50,7 +50,7 @@ from .errors import (
     ErrorSeverity,
     ClassifiedError,
     ErrorClassifier,
-    AirOSError,
+    AgentFuseError,
     RecoveryError,
     ConfigurationError,
     ProviderError,
@@ -75,7 +75,7 @@ from .strategies import (
 
 
 # --- Lazy imports for heavy/optional modules ---
-# These are only loaded when accessed, so `pip install airos` stays fast
+# These are only loaded when accessed, so `pip install agentfuse` stays fast
 
 def __getattr__(name):
     """Lazy-load optional modules on first access."""
@@ -99,7 +99,7 @@ def __getattr__(name):
         from . import rca
         return getattr(rca, name)
 
-    raise AttributeError(f"module 'airos' has no attribute {name!r}")
+    raise AttributeError(f"module 'agentfuse' has no attribute {name!r}")
 
 
 # Version
@@ -138,7 +138,7 @@ __all__ = [
     "ErrorSeverity",
     "ClassifiedError",
     "ErrorClassifier",
-    "AirOSError",
+    "AgentFuseError",
     "RecoveryError",
     "ConfigurationError",
     "ProviderError",

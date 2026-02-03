@@ -1,10 +1,10 @@
 """
-CrewAI adapter for AirOS.
+AutoGen adapter for AgentFuse.
 
-Provides integration with CrewAI's agents, tasks, and crews.
+Provides integration with Microsoft AutoGen's conversable agents and group chats.
 """
 import functools
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 import time
 
 from pydantic import BaseModel
@@ -16,20 +16,21 @@ from ..sentinel import Sentinel, SentinelError
 from ..storage import Storage
 
 
-class CrewAIAdapter(FrameworkAdapter):
+class AutoGenAdapter(FrameworkAdapter):
     """
-    Adapter for CrewAI framework.
+    Adapter for Microsoft AutoGen framework.
 
     Supports:
-    - Agent wrapping
-    - Task wrapping
-    - Crew-level middleware
-    - Tool wrapping
+    - ConversableAgent wrapping
+    - AssistantAgent wrapping
+    - UserProxyAgent wrapping
+    - GroupChat middleware
+    - Function/Tool registration
     """
 
     @property
     def framework_name(self) -> str:
-        return "crewai"
+        return "autogen"
 
     def wrap_node(
         self,
@@ -38,52 +39,58 @@ class CrewAIAdapter(FrameworkAdapter):
         node_name: Optional[str] = None,
         **kwargs
     ) -> Callable:
-        """Wrap a CrewAI component."""
+        """Wrap an AutoGen component."""
         return self._create_wrapper(func, schema, node_name)
 
-    def create_middleware(self) -> "CrewAIMiddleware":
-        """Create middleware for CrewAI."""
-        return CrewAIMiddleware(self.config)
+    def create_middleware(self) -> "AutoGenMiddleware":
+        """Create middleware for AutoGen."""
+        return AutoGenMiddleware(self.config)
 
     def extract_state(self, *args, **kwargs) -> Dict[str, Any]:
-        """Extract state from CrewAI task/agent execution."""
+        """Extract state from AutoGen message/execution."""
         state = {}
 
-        # CrewAI Task input
+        # AutoGen message structure
         if args:
             first_arg = args[0]
-            if hasattr(first_arg, "description"):
-                # This is likely a Task
-                state["task_description"] = first_arg.description
-                if hasattr(first_arg, "context"):
-                    state["context"] = first_arg.context
-            elif isinstance(first_arg, dict):
+            if isinstance(first_arg, dict):
                 state = first_arg
             elif isinstance(first_arg, str):
-                state["input"] = first_arg
+                state["content"] = first_arg
+            elif hasattr(first_arg, "content"):
+                state["content"] = first_arg.content
 
-        # Check kwargs
-        state.update({
-            k: v for k, v in kwargs.items()
-            if k in ["input", "context", "task", "query"]
-        })
+        # Common AutoGen kwargs
+        for key in ["message", "messages", "sender", "recipient", "context"]:
+            if key in kwargs:
+                value = kwargs[key]
+                if hasattr(value, "name"):
+                    state[key] = value.name
+                elif isinstance(value, list):
+                    state[key] = [
+                        m if isinstance(m, dict) else {"content": str(m)}
+                        for m in value
+                    ]
+                else:
+                    state[key] = value
 
         return state
 
     def extract_config(self, *args, **kwargs) -> Dict[str, Any]:
-        """Extract config from CrewAI execution."""
-        config = {}
+        """Extract config from AutoGen execution."""
+        config = {"configurable": {}}
 
-        # Check for crew context
-        if "crew" in kwargs:
-            crew = kwargs["crew"]
-            if hasattr(crew, "id"):
-                config["run_id"] = str(crew.id)
+        # Check for chat ID or session
+        if "chat_id" in kwargs:
+            config["run_id"] = kwargs["chat_id"]
+        elif "session_id" in kwargs:
+            config["run_id"] = kwargs["session_id"]
 
-        # Check for task ID
-        for arg in args:
-            if hasattr(arg, "id"):
-                config.setdefault("configurable", {})["task_id"] = str(arg.id)
+        # Check sender/recipient for context
+        if "sender" in kwargs and hasattr(kwargs["sender"], "name"):
+            config["configurable"]["sender"] = kwargs["sender"].name
+        if "recipient" in kwargs and hasattr(kwargs["recipient"], "name"):
+            config["configurable"]["recipient"] = kwargs["recipient"].name
 
         return config
 
@@ -93,8 +100,8 @@ class CrewAIAdapter(FrameworkAdapter):
         schema: Optional[Type[BaseModel]],
         node_name: Optional[str]
     ) -> Callable:
-        """Create a wrapper for CrewAI components."""
-        actual_name = node_name or getattr(func, "__name__", "crewai_node")
+        """Create a wrapper for AutoGen components."""
+        actual_name = node_name or getattr(func, "__name__", "autogen_node")
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -148,15 +155,19 @@ class CrewAIAdapter(FrameworkAdapter):
 
             # Validate
             if not current_error and sentinel:
-                # Convert CrewAI output to dict if needed
-                if hasattr(result, "raw"):
-                    result_dict = {"raw": result.raw}
-                    if hasattr(result, "json_dict"):
-                        result_dict.update(result.json_dict or {})
-                elif isinstance(result, str):
-                    result_dict = {"output": result}
+                # Convert AutoGen output to dict
+                if isinstance(result, str):
+                    result_dict = {"content": result}
+                elif isinstance(result, tuple):
+                    # AutoGen often returns (terminate, response) tuples
+                    result_dict = {
+                        "terminate": result[0] if len(result) > 0 else False,
+                        "content": result[1] if len(result) > 1 else None
+                    }
+                elif isinstance(result, dict):
+                    result_dict = result
                 else:
-                    result_dict = result if isinstance(result, dict) else {"output": result}
+                    result_dict = {"output": result}
 
                 try:
                     validated = sentinel.validate(result_dict)
@@ -222,143 +233,143 @@ class CrewAIAdapter(FrameworkAdapter):
 
         return wrapper
 
-    @staticmethod
-    def _safe_setattr(obj: Any, name: str, value: Any) -> None:
+    def wrap_agent(
+        self,
+        agent: Any,
+        schema: Optional[Type[BaseModel]] = None
+    ) -> Any:
         """
-        Set an attribute on an object, bypassing Pydantic restrictions.
-
-        CrewAI v1.x Agent/Task are Pydantic BaseModel instances which block
-        setting attributes that aren't declared fields. We use
-        object.__setattr__ to bypass this restriction when patching methods.
-        """
-        try:
-            setattr(obj, name, value)
-        except (ValueError, AttributeError):
-            # Pydantic model — bypass field validation
-            object.__setattr__(obj, name, value)
-
-    def wrap_agent(self, agent: Any, schema: Optional[Type[BaseModel]] = None) -> Any:
-        """
-        Wrap a CrewAI Agent with reliability features.
+        Wrap an AutoGen agent with reliability features.
 
         Args:
-            agent: CrewAI Agent instance
+            agent: AutoGen ConversableAgent or subclass
             schema: Optional output schema
 
         Returns:
             Wrapped agent
         """
-        if hasattr(agent, "execute_task"):
-            original_execute = agent.execute_task
-            wrapper = self._create_wrapper(
-                original_execute,
+        agent_name = getattr(agent, "name", "autogen_agent")
+
+        # Wrap the generate_reply method
+        if hasattr(agent, "generate_reply"):
+            original_generate = agent.generate_reply
+            agent.generate_reply = self._create_wrapper(
+                original_generate,
                 schema,
-                f"agent_{agent.role}" if hasattr(agent, "role") else "crewai_agent"
+                f"{agent_name}_generate_reply"
             )
-            self._safe_setattr(agent, "execute_task", wrapper)
+
+        # Wrap registered functions
+        if hasattr(agent, "_function_map"):
+            for func_name, func in agent._function_map.items():
+                agent._function_map[func_name] = self._create_wrapper(
+                    func,
+                    None,
+                    f"{agent_name}_{func_name}"
+                )
+
         return agent
 
-    def wrap_task(self, task: Any, schema: Optional[Type[BaseModel]] = None) -> Any:
+    def wrap_function(
+        self,
+        func: Callable,
+        schema: Optional[Type[BaseModel]] = None,
+        name: Optional[str] = None
+    ) -> Callable:
         """
-        Wrap a CrewAI Task with reliability features.
-
-        Supports both CrewAI v0.x (task.execute) and v1.x (task.execute_sync).
+        Wrap a function for registration with AutoGen agents.
 
         Args:
-            task: CrewAI Task instance
-            schema: Optional output schema (can also use task.output_pydantic)
+            func: Function to wrap
+            schema: Optional output schema
+            name: Optional custom name
 
         Returns:
-            Wrapped task
+            Wrapped function
         """
-        # Use task's output_pydantic if no schema provided
-        if schema is None and hasattr(task, "output_pydantic"):
-            schema = task.output_pydantic
-
-        # CrewAI v1.x uses execute_sync; v0.x uses execute
-        method_name = "execute_sync" if hasattr(task, "execute_sync") else "execute"
-
-        if hasattr(task, method_name):
-            original_execute = getattr(task, method_name)
-            wrapper = self._create_wrapper(
-                original_execute,
-                schema,
-                f"task_{task.description[:30]}" if hasattr(task, "description") else "crewai_task"
-            )
-            self._safe_setattr(task, method_name, wrapper)
-        return task
+        return self._create_wrapper(func, schema, name or func.__name__)
 
 
-class CrewAIMiddleware:
+class AutoGenMiddleware:
     """
-    Middleware for automatically wrapping CrewAI components.
+    Middleware for automatically wrapping AutoGen components.
 
     Usage:
-        from airos.adapters import CrewAIAdapter
-        from crewai import Agent, Task, Crew
+        from agentfuse.adapters import AutoGenAdapter
+        import autogen
 
-        adapter = CrewAIAdapter()
+        adapter = AutoGenAdapter()
         middleware = adapter.create_middleware()
 
-        # Wrap a crew
-        crew = middleware.wrap_crew(my_crew)
-
-        # Or wrap individual agents
+        # Wrap an agent
         agent = middleware.wrap_agent(my_agent)
+
+        # Wrap a group chat
+        group_chat = middleware.wrap_group_chat(my_group_chat)
+
+        # Use as decorator for functions
+        @middleware.function(schema=MySchema)
+        def my_function(input: str) -> str:
+            return "result"
     """
 
     def __init__(self, config: AdapterConfig):
         self.config = config
-        self._adapter = CrewAIAdapter(config)
+        self._adapter = AutoGenAdapter(config)
 
-    def wrap_agent(self, agent: Any, schema: Optional[Type[BaseModel]] = None) -> Any:
-        """Wrap a CrewAI agent."""
+    def wrap_agent(
+        self,
+        agent: Any,
+        schema: Optional[Type[BaseModel]] = None
+    ) -> Any:
+        """Wrap an AutoGen agent."""
         return self._adapter.wrap_agent(agent, schema)
 
-    def wrap_task(self, task: Any, schema: Optional[Type[BaseModel]] = None) -> Any:
-        """Wrap a CrewAI task."""
-        return self._adapter.wrap_task(task, schema)
-
-    def wrap_crew(self, crew: Any) -> Any:
+    def wrap_group_chat(self, group_chat: Any) -> Any:
         """
-        Wrap an entire CrewAI Crew.
+        Wrap an AutoGen GroupChat.
 
-        Wraps all agents and tasks in the crew.
+        Wraps all agents in the group chat.
 
         Args:
-            crew: CrewAI Crew instance
+            group_chat: AutoGen GroupChat instance
 
         Returns:
-            Wrapped crew
+            Wrapped group chat
         """
-        if hasattr(crew, "agents"):
-            for i, agent in enumerate(crew.agents):
-                crew.agents[i] = self.wrap_agent(agent)
+        if hasattr(group_chat, "agents"):
+            for i, agent in enumerate(group_chat.agents):
+                group_chat.agents[i] = self.wrap_agent(agent)
 
-        if hasattr(crew, "tasks"):
-            for i, task in enumerate(crew.tasks):
-                crew.tasks[i] = self.wrap_task(task)
+        return group_chat
 
-        return crew
+    def wrap_function(
+        self,
+        func: Callable,
+        schema: Optional[Type[BaseModel]] = None,
+        name: Optional[str] = None
+    ) -> Callable:
+        """Wrap a function for use with AutoGen."""
+        return self._adapter.wrap_function(func, schema, name)
 
-    def agent(
+    def function(
         self,
         schema: Optional[Type[BaseModel]] = None,
         name: Optional[str] = None
     ) -> Callable:
-        """Decorator for agent execution methods."""
+        """Decorator for wrapping functions."""
         def decorator(func: Callable) -> Callable:
-            return self._adapter.wrap_node(func, schema, name or func.__name__)
+            return self._adapter.wrap_function(func, schema, name)
         return decorator
 
-    def task(
+    def agent_reply(
         self,
         schema: Optional[Type[BaseModel]] = None,
         name: Optional[str] = None
     ) -> Callable:
-        """Decorator for task execution methods."""
-        return self.agent(schema, name)
+        """Decorator for agent reply methods."""
+        return self.function(schema, name)
 
 
 # Register the adapter
-AdapterRegistry.register("crewai", CrewAIAdapter)
+AdapterRegistry.register("autogen", AutoGenAdapter)

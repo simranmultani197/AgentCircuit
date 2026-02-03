@@ -5,8 +5,8 @@ import time
 import threading
 import pytest
 
-from airos.budget import BudgetFuse, TimeoutFuse, GlobalBudget
-from airos.errors import BudgetExceededError, TimeoutExceededError
+from agentfuse.budget import BudgetFuse, TimeoutFuse, GlobalBudget
+from agentfuse.errors import BudgetExceededError, TimeoutExceededError
 
 
 # ============================================================================
@@ -321,15 +321,15 @@ class TestGlobalBudgetThreadSafety:
 class TestBudgetErrors:
     """Test budget-related error types."""
 
-    def test_budget_exceeded_error_is_airos_error(self):
-        """Test BudgetExceededError inherits from AirOSError."""
-        from airos.errors import AirOSError
-        assert issubclass(BudgetExceededError, AirOSError)
+    def test_budget_exceeded_error_is_agentfuse_error(self):
+        """Test BudgetExceededError inherits from AgentFuseError."""
+        from agentfuse.errors import AgentFuseError
+        assert issubclass(BudgetExceededError, AgentFuseError)
 
-    def test_timeout_exceeded_error_is_airos_error(self):
-        """Test TimeoutExceededError inherits from AirOSError."""
-        from airos.errors import AirOSError
-        assert issubclass(TimeoutExceededError, AirOSError)
+    def test_timeout_exceeded_error_is_agentfuse_error(self):
+        """Test TimeoutExceededError inherits from AgentFuseError."""
+        from agentfuse.errors import AgentFuseError
+        assert issubclass(TimeoutExceededError, AgentFuseError)
 
     def test_budget_exceeded_error_attributes(self):
         """Test BudgetExceededError stores spent and limit."""

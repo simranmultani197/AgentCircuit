@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "airos-sdk"
+name = "agentcircuit"
 version = "0.4.1"
-description = "One decorator to make any AI agent reliable. Loop detection, auto-repair, output validation."
+description = "One decorator to make any AI agent reliable. Loop detection, auto-repair, output validation, budget control."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{name = "Simranjeet Singh", email = "simranmultani197@gmail.com"}]
-keywords = ["ai", "agents", "reliability", "llm", "langchain", "crewai", "autogen", "langgraph"]
+keywords = ["ai", "agents", "reliability", "llm", "langchain", "crewai", "autogen", "langgraph", "agentfuse"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -29,10 +29,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/simranmultani197/AirOs"
-Documentation = "https://github.com/simranmultani197/AirOs#readme"
-Repository = "https://github.com/simranmultani197/AirOs"
-Issues = "https://github.com/simranmultani197/AirOs/issues"
+Homepage = "https://github.com/simranmultani197/AgentFuse"
+Documentation = "https://github.com/simranmultani197/AgentFuse#readme"
+Repository = "https://github.com/simranmultani197/AgentFuse"
+Issues = "https://github.com/simranmultani197/AgentFuse/issues"
 
 [project.optional-dependencies]
 # LLM providers for auto-repair (pick what you use)
@@ -73,11 +73,11 @@ dev = [
 
 # Everything
 all = [
-    "airos-sdk[llm,langchain,crewai,langgraph,postgres,dev]",
+    "agentcircuit[llm,langchain,crewai,langgraph,postgres,dev]",
 ]
 
 [tool.setuptools.packages.find]
-include = ["airos*"]
+include = ["agentfuse*"]
 exclude = ["tests*", "dashboard*", "docs*", "assets*"]
 
 [tool.pytest.ini_options]
@@ -92,7 +92,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["airos"]
+source = ["agentfuse"]
 omit = ["tests/*", "*/__pycache__/*"]
 
 [tool.coverage.report]

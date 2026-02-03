@@ -8,10 +8,10 @@ import os
 from pydantic import BaseModel
 from typing import Dict, Any
 
-from airos import reliable_node, LoopError, SentinelError
-from airos.storage import Storage, InMemoryStorage
-from airos.budget import GlobalBudget
-from airos.errors import BudgetExceededError, TimeoutExceededError
+from agentfuse import reliable_node, LoopError, SentinelError
+from agentfuse.storage import Storage, InMemoryStorage
+from agentfuse.budget import GlobalBudget
+from agentfuse.errors import BudgetExceededError, TimeoutExceededError
 
 
 # ============================================================================

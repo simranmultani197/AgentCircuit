@@ -1,5 +1,5 @@
 """
-Storage layer for AirOS.
+Storage layer for AgentFuse.
 
 Provides:
 - In-memory storage (default, zero dependencies)
@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 
-DB_PATH = ".air_os/traces.db"
+DB_PATH = ".agentfuse/traces.db"
 
 
 class StorageBackend(Enum):
